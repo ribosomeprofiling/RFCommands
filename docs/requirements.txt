@@ -1,0 +1,8 @@
+Sphinx>=1.6
+sphinx-rtd-theme
+sphinx-click
+numpydoc
+recommonmark
+m2r
+click
+pyyaml
