@@ -57,21 +57,27 @@ UNIQUE_HIDDEN_ROWS = {
 }
 
 # ── Multi-mapper mode (MAPQ < 255) ────────────────────────────────────────────
-# Full breakdown: unique vs multi-primary at qpass stage.
+# Per-stage breakdown: unique reads, multi-mapping reads (NH>1), secondary
+# alignment records — at alignment, qpass, and dedup stages.
+# All percentages are relative to filter_kept (reads entering STAR alignment).
+# Secondary % can exceed 100 since it counts records, not reads.
 
 MULTI_PERCENTAGE_ROWS = [
-    ("clipped_reads",                "total_reads",                "clipped_reads_%"),
-    ("filtered_out",                 "clipped_reads",              "filtered_out_%"),
-    ("filter_kept",                  "clipped_reads",              "filter_kept_%"),
-    ("genome_aligned_once",          "filter_kept",                "genome_aligned_once_%"),
-    ("genome_aligned_many",          "filter_kept",                "genome_aligned_many_%"),
-    ("genome_primary_alignments",    "filter_kept",                "genome_primary_alignments_%"),
-    ("genome_primary_alignments",    "genome_total_alignments",    "genome_pct_primary"),
-    ("qpass_unique_alignments",      "genome_primary_alignments",  "qpass_unique_alignments_%"),
-    ("qpass_multi_primary_alignments","genome_primary_alignments", "qpass_multi_primary_alignments_%"),
-    ("qpass_total_alignments",       "filter_kept",                "qpass_total_alignments_%"),
-    ("dedup_primary_alignments",     "qpass_total_alignments",     "dedup_primary_alignments_%"),
-    ("dedup_total_alignments",       "qpass_total_alignments",     "dedup_total_alignments_%"),
+    ("clipped_reads",                   "total_reads",  "clipped_reads_%"),
+    ("filtered_out",                    "clipped_reads","filtered_out_%"),
+    ("filter_kept",                     "clipped_reads","filter_kept_%"),
+    # Alignment stage
+    ("genome_aligned_once",             "filter_kept",  "genome_aligned_once_%"),
+    ("genome_aligned_many",             "filter_kept",  "genome_aligned_many_%"),
+    ("genome_secondary_alignments",     "filter_kept",  "genome_secondary_alignments_%"),
+    # Qpass stage
+    ("qpass_unique_alignments",         "filter_kept",  "qpass_unique_alignments_%"),
+    ("qpass_multi_primary_alignments",  "filter_kept",  "qpass_multi_primary_alignments_%"),
+    ("qpass_secondary_alignments",      "filter_kept",  "qpass_secondary_alignments_%"),
+    # Dedup stage
+    ("dedup_unique_alignments",         "filter_kept",  "dedup_unique_alignments_%"),
+    ("dedup_multi_primary_alignments",  "filter_kept",  "dedup_multi_primary_alignments_%"),
+    ("dedup_secondary_alignments",      "filter_kept",  "dedup_secondary_alignments_%"),
 ]
 
 MULTI_OUTPUT_ROW_ORDER = [
@@ -82,30 +88,39 @@ MULTI_OUTPUT_ROW_ORDER = [
     "filtered_out_%",
     "filter_kept",
     "filter_kept_%",
+    # Alignment
     "genome_aligned_once",
     "genome_aligned_once_%",
     "genome_aligned_many",
     "genome_aligned_many_%",
-    "genome_unaligned",
-    "genome_primary_alignments",
-    "genome_primary_alignments_%",
     "genome_secondary_alignments",
-    "genome_total_alignments",
-    "genome_pct_primary",
+    "genome_secondary_alignments_%",
+    "genome_unaligned",
+    # Qpass
     "qpass_unique_alignments",
     "qpass_unique_alignments_%",
     "qpass_multi_primary_alignments",
     "qpass_multi_primary_alignments_%",
-    "qpass_primary_alignments",
     "qpass_secondary_alignments",
-    "qpass_total_alignments",
-    "qpass_total_alignments_%",
-    "dedup_primary_alignments",
-    "dedup_primary_alignments_%",
+    "qpass_secondary_alignments_%",
+    # Dedup
+    "dedup_unique_alignments",
+    "dedup_unique_alignments_%",
+    "dedup_multi_primary_alignments",
+    "dedup_multi_primary_alignments_%",
     "dedup_secondary_alignments",
-    "dedup_total_alignments",
-    "dedup_total_alignments_%",
+    "dedup_secondary_alignments_%",
 ]
+
+# Internal rows used for computation but not shown in multi-mapper output.
+MULTI_HIDDEN_ROWS = {
+    "genome_primary_alignments",
+    "genome_total_alignments",
+    "qpass_primary_alignments",
+    "qpass_total_alignments",
+    "dedup_primary_alignments",
+    "dedup_total_alignments",
+}
 
 
 def _safe_pct(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
@@ -130,6 +145,7 @@ def genome_stats_percentage(
     pct_rows   = UNIQUE_PERCENTAGE_ROWS   if unique_only else MULTI_PERCENTAGE_ROWS
     row_order  = UNIQUE_OUTPUT_ROW_ORDER  if unique_only else MULTI_OUTPUT_ROW_ORDER
     renames    = UNIQUE_ROW_RENAMES       if unique_only else {}
+    hidden     = UNIQUE_HIDDEN_ROWS       if unique_only else MULTI_HIDDEN_ROWS
 
     for num_row, denom_row, derived_row in pct_rows:
         missing = [r for r in (num_row, denom_row) if r not in df.index]
@@ -144,7 +160,6 @@ def genome_stats_percentage(
     if renames:
         df = df.rename(index=renames)
 
-    hidden      = UNIQUE_HIDDEN_ROWS if unique_only else set()
     extras      = [r for r in df.index if r not in row_order and r not in hidden]
     final_order = [r for r in row_order if r in df.index] + extras
     df = df.loc[final_order]
