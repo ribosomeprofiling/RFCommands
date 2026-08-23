@@ -46,9 +46,7 @@ UNIQUE_ROW_RENAMES = {
 # Internal rows not shown in unique-only output (primary/secondary distinction is
 # meaningless when all reads are unique mappers).
 UNIQUE_HIDDEN_ROWS = {
-    "genome_primary_alignments",
     "genome_secondary_alignments",
-    "genome_total_alignments",
     "qpass_primary_alignments",
     "qpass_secondary_alignments",
     "qpass_total_alignments",
@@ -114,8 +112,6 @@ MULTI_OUTPUT_ROW_ORDER = [
 
 # Internal rows used for computation but not shown in multi-mapper output.
 MULTI_HIDDEN_ROWS = {
-    "genome_primary_alignments",
-    "genome_total_alignments",
     "qpass_primary_alignments",
     "qpass_total_alignments",
     "dedup_primary_alignments",

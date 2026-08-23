@@ -57,10 +57,13 @@ def parse_star_log(path: Path) -> dict[str, str]:
             f"STAR log {path} is missing required fields: {', '.join(missing)}"
         )
 
+    # Reads "mapped to too many loci" are not written to the BAM by STAR, so
+    # they are unaligned from the pipeline's perspective and counted here.
     unmapped_total = (
         int(fields.get("unmapped_too_many_mismatches", 0) or 0)
         + int(fields.get("unmapped_too_short", 0) or 0)
         + int(fields.get("unmapped_other", 0) or 0)
+        + int(fields.get("too_many_loci", 0) or 0)
     )
     fields["unmapped_total"] = str(unmapped_total)
     fields["primary_aligned_total"] = str(
