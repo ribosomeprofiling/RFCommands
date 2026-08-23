@@ -14,14 +14,6 @@ def get_index_pairs(label_prefix="transcriptome"):
              (f"{label_prefix}_qpass_aligned_reads", f"{label_prefix}_total_aligned"),
              (f"{label_prefix}_after_dedup", f"{label_prefix}_qpass_aligned_reads")]
                 
-# REMOVED PAIRS
-"""
-                ("genome_aligned_once", "transcriptome_unaligned"),
-                ("genome_aligned_many", "transcriptome_unaligned"),
-                ("genome_total_aligned", "transcriptome_unaligned"),
-                ("genome_unaligned", "transcriptome_unaligned")
-"""                
-
 def make_df_with_percentage_rows(this_df ,  index_pairs):
     new_index_list = list()
     new_df = pd.DataFrame(columns=this_df.columns )
