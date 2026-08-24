@@ -64,3 +64,4 @@ def deduplicate(inbed, outbed):
     output_handle.close()
     
     print(read_count)
+

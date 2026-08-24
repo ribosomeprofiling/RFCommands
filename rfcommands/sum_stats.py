@@ -18,3 +18,4 @@ def sum_stats(stats_files, output, col_name):
 
     summed_df = sum_log_csv_files(stats_files, col_name)
     summed_df.to_csv(output)
+

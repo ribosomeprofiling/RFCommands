@@ -3,24 +3,17 @@
 import pandas as pd
 import numpy as np
 
-INDEX_PAIRS = [ ("clipped_reads", "total_reads"),
-                ("filtered_out", "clipped_reads"),
-                ("filter_kept", "clipped_reads"),
-                ("transcriptome_aligned_once", "filter_kept"),
-                ("transcriptome_aligned_many", "filter_kept"),
-                ("transcriptome_total_aligned", "filter_kept"),
-                ("transcriptome_unaligned", "filter_kept"),
-                ("qpass_aligned_reads", "transcriptome_total_aligned"),
-                ("after_dedup", "qpass_aligned_reads")]
+def get_index_pairs(label_prefix="transcriptome"):
+    return [ ("clipped_reads", "total_reads"),
+             ("filtered_out", "clipped_reads"),
+             ("filter_kept", "clipped_reads"),
+             (f"{label_prefix}_aligned_once", "filter_kept"),
+             (f"{label_prefix}_aligned_many", "filter_kept"),
+             (f"{label_prefix}_total_aligned", "filter_kept"),
+             (f"{label_prefix}_unaligned", "filter_kept"),
+             (f"{label_prefix}_qpass_aligned_reads", f"{label_prefix}_total_aligned"),
+             (f"{label_prefix}_after_dedup", f"{label_prefix}_qpass_aligned_reads")]
                 
-# REMOVED PAIRS
-"""
-                ("genome_aligned_once", "transcriptome_unaligned"),
-                ("genome_aligned_many", "transcriptome_unaligned"),
-                ("genome_total_aligned", "transcriptome_unaligned"),
-                ("genome_unaligned", "transcriptome_unaligned")
-"""                
-
 def make_df_with_percentage_rows(this_df ,  index_pairs):
     new_index_list = list()
     new_df = pd.DataFrame(columns=this_df.columns )
@@ -32,7 +25,7 @@ def make_df_with_percentage_rows(this_df ,  index_pairs):
             new_df.loc[denominator] = this_df.loc[ denominator ]
         new_df.loc[numerator] = this_df.loc[numerator]
         this_row = 100 * (this_df.loc[ numerator ] / this_df.loc[ denominator ] )
-        this_row = np.array( this_row, dtype=np.float )
+        this_row = np.array( this_row, dtype=float )
         this_row = np.around(this_row, 2)
         new_df.loc[numerator_percentage] =this_row
         new_index_list.append( numerator )
@@ -42,10 +35,12 @@ def make_df_with_percentage_rows(this_df ,  index_pairs):
     return new_df
 
 
-def stats_percentage(input_csv, output_csv):
-    
+def stats_percentage(input_csv, output_csv, label_prefix="transcriptome"):
+
     raw_df = pd.read_csv( input_csv, header=0, index_col=0 )
-    new_df = make_df_with_percentage_rows(raw_df ,  INDEX_PAIRS)
+    index_pairs = get_index_pairs(label_prefix)
+    new_df = make_df_with_percentage_rows(raw_df ,  index_pairs)
     new_df.to_csv( output_csv)
     return new_df
     
+

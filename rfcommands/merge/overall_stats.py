@@ -18,3 +18,4 @@ def merge_overall_stats(stat_files, out):
     	combined_stats.to_csv(out)
     else:
     	print(combined_stats.to_csv(), end="")
+
