@@ -35,7 +35,14 @@ UNIQUE_OUTPUT_ROW_ORDER = [
     "genome_qpass_reads_%",
     "genome_after_dedup",
     "genome_after_dedup_%",
+    "transcriptome_projection",
+    "transcriptome_projection_%",
 ]
+
+# Optional row (STAR --quantMode TranscriptomeSAM projection): present only when
+# stats-individual was given --tx-projection-count. Both modes report it as a
+# fraction of the post-dedup primary reads.
+TX_PROJECTION_PCT_ROW = ("transcriptome_projection", "dedup_primary_alignments", "transcriptome_projection_%")
 
 # Rename internal row names → user-facing names for the unique-only output.
 UNIQUE_ROW_RENAMES = {
@@ -108,6 +115,8 @@ MULTI_OUTPUT_ROW_ORDER = [
     "dedup_multi_primary_alignments_%",
     "dedup_secondary_alignments",
     "dedup_secondary_alignments_%",
+    "transcriptome_projection",
+    "transcriptome_projection_%",
 ]
 
 # Internal rows used for computation but not shown in multi-mapper output.
@@ -138,7 +147,9 @@ def genome_stats_percentage(
     if unique_only is None:
         unique_only = "qpass_unique_alignments" not in df.index
 
-    pct_rows   = UNIQUE_PERCENTAGE_ROWS   if unique_only else MULTI_PERCENTAGE_ROWS
+    pct_rows   = list(UNIQUE_PERCENTAGE_ROWS if unique_only else MULTI_PERCENTAGE_ROWS)
+    if TX_PROJECTION_PCT_ROW[0] in df.index:
+        pct_rows.append(TX_PROJECTION_PCT_ROW)
     row_order  = UNIQUE_OUTPUT_ROW_ORDER  if unique_only else MULTI_OUTPUT_ROW_ORDER
     renames    = UNIQUE_ROW_RENAMES       if unique_only else {}
     hidden     = UNIQUE_HIDDEN_ROWS       if unique_only else MULTI_HIDDEN_ROWS

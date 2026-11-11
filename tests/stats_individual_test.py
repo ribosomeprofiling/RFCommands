@@ -71,6 +71,48 @@ class TestStatsIndividual(TestBase):
         o, e = self.run_command(base + ["--qpass-unique", _count(t, "qu2", 40000), "--dedup-unique", _count(t, "du", 33290)])
         self.assertIn("qpass unique", e)
 
+    def test_genome_tx_projection_row(self):
+        # --tx-projection-count adds transcriptome_projection; genome-stats-percentage
+        # then derives transcriptome_projection_% from dedup primary.
+        t = self.tmp
+        out = os.path.join(t, "tx.csv")
+        base = ["rfc", "stats-individual", "--route", "genome", "--prefix", "GSM8325903.1",
+                "--clip-log", f"{DATA}/GSM8325903.1.clipped.log",
+                "--filter-log", f"{DATA}/GSM8325903.1.filter.log",
+                "--align-log", f"{DATA}/GSM8325903.1.genome_alignment.log",
+                "--genome-secondary-count", _count(t, "sec", 20),
+                "--qpass-total", _count(t, "qt", 37519), "--qpass-primary", _count(t, "qp", 37519),
+                "--qpass-secondary", _count(t, "qs", 0),
+                "--dedup-total", _count(t, "dt", 33296), "--dedup-primary", _count(t, "dp", 33296),
+                "--dedup-secondary", _count(t, "ds", 0), "--unique-only", "-o", out]
+        o, e = self.run_command(base + ["--tx-projection-count", _count(t, "tx", 29966)])
+        self.assertEqual(e, "", e)
+        rows = self._rows(out)
+        self.assertEqual(rows["transcriptome_projection"], 29966)
+
+        pct = os.path.join(t, "tx_pct.csv")
+        o, e = self.run_command(["rfc", "genome-stats-percentage", "--unique-only", "-i", out, "-o", pct])
+        self.assertEqual(e, "", e)
+        with open(pct) as fh:
+            prows = {r[0]: r[1] for r in csv.reader(fh) if r and r[0]}
+        self.assertEqual(float(prows["transcriptome_projection_%"]), 90.0)
+        self.assertEqual(list(prows)[-2:], ["transcriptome_projection", "transcriptome_projection_%"])
+
+        # Without the option the row (and its %) are absent, so existing outputs are unchanged.
+        o, e = self.run_command(base)
+        self.assertEqual(e, "", e)
+        self.assertNotIn("transcriptome_projection", self._rows(out))
+        o, e = self.run_command(["rfc", "genome-stats-percentage", "--unique-only", "-i", out, "-o", pct])
+        self.assertEqual(e, "", e)
+        with open(pct) as fh:
+            self.assertNotIn("transcriptome_projection_%", {r[0] for r in csv.reader(fh) if r})
+
+        # A projection count above dedup primary is valid (no-dedup RNA-seq keeps
+        # multimappers the genome count drops), so it must not fail.
+        o, e = self.run_command(base + ["--tx-projection-count", _count(t, "tx2", 40000)])
+        self.assertEqual(e, "", e)
+        self.assertEqual(self._rows(out)["transcriptome_projection"], 40000)
+
     def test_transcriptome(self):
         t = self.tmp
         out = os.path.join(t, "t.csv")

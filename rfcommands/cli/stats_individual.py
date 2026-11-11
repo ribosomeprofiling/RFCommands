@@ -25,9 +25,12 @@ from ..stats_individual import genome_stats_rows, transcriptome_stats_rows, writ
 @click.option('--unique-only/--multi', default=True,
               help='Stats mode. --multi additionally emits the unique/multi-primary breakdown '
                    'and requires --qpass-unique / --dedup-unique.')
+@click.option('--tx-projection-count', type=click.Path(exists=True),
+              help='genome route only: distinct reads in the post-dedup STAR transcriptome-projection '
+                   'BAM; adds the transcriptome_projection row.')
 def stats_individual(route, prefix, clip_log, filter_log, align_log, out, qpass_total, dedup_total,
                      genome_secondary_count, qpass_primary, qpass_secondary, qpass_unique,
-                     dedup_primary, dedup_secondary, dedup_unique, unique_only):
+                     dedup_primary, dedup_secondary, dedup_unique, unique_only, tx_projection_count):
     """Write one per-lane raw-count stats CSV for the genome or transcriptome route.
 
     Parses the cutadapt, bowtie2 filter and alignment logs by label, reads the
@@ -43,7 +46,8 @@ def stats_individual(route, prefix, clip_log, filter_log, align_log, out, qpass_
         rows = genome_stats_rows(prefix, Path(clip_log), Path(filter_log), Path(align_log),
                                  genome_secondary_count, qpass_total, qpass_primary, qpass_secondary,
                                  dedup_total, dedup_primary, dedup_secondary, unique_only,
-                                 qpass_unique=qpass_unique, dedup_unique=dedup_unique)
+                                 qpass_unique=qpass_unique, dedup_unique=dedup_unique,
+                                 tx_projection=tx_projection_count)
     else:
         rows = transcriptome_stats_rows(prefix, Path(clip_log), Path(filter_log), Path(align_log),
                                         qpass_total, dedup_total)

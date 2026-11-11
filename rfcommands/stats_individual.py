@@ -58,6 +58,7 @@ def genome_stats_rows(
     unique_only: bool,
     qpass_unique=None,
     dedup_unique=None,
+    tx_projection=None,
 ) -> list[tuple[str, int]]:
     total_reads, clipped_reads = parse_cutadapt_log(clip_log)
 
@@ -109,6 +110,11 @@ def genome_stats_rows(
             ("dedup_unique_alignments",        du),
             ("dedup_multi_primary_alignments", dp - du),
         ]
+    if tx_projection is not None:
+        # Distinct reads STAR projected onto an annotated transcript. Not bounded by
+        # dedup primary: without dedup the projection BAM keeps its own (looser)
+        # quality filter, so it can hold multimappers the genome count excludes.
+        rows.append(("transcriptome_projection", read_count_file(tx_projection)))
     return rows
 
 
